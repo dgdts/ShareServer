@@ -1,0 +1,56 @@
+// idl/share/share.proto
+
+syntax = "proto3";
+
+package share;
+
+option go_package = "/share";
+
+import "api.proto";
+import "google/protobuf/timestamp.proto";
+
+message GetShareNoteRequest {
+    string share_id = 1;
+}
+
+message GetShareNoteResponse {
+}
+
+message ListShareNoteCommentsRequest {
+    string share_id = 1;
+    int64 page = 2;
+    int64 page_size = 3;
+}
+
+message ShareNoteComment {
+    string share_id = 1;
+    string alias = 2;
+    string content = 3;
+    string ip = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+message ListShareNoteCommentsResponse {
+    repeated ShareNoteComment comments = 1;
+    int64 total = 2;
+}
+
+message CreateShareNoteCommentRequest {
+    ShareNoteComment comment = 1;
+}
+
+message CreateShareNoteCommentResponse {}
+
+service ShareService {
+    rpc GetShareNote (GetShareNoteRequest) returns (GetShareNoteResponse) {
+        option (api.get) = "/api/v1/share/:share_id";
+    }
+
+    rpc ListShareNoteComments (ListShareNoteCommentsRequest) returns (ListShareNoteCommentsResponse) {
+        option (api.get) = "/api/v1/share/:share_id/comments";
+    }
+
+    rpc CreateShareNoteComment (CreateShareNoteCommentRequest) returns (CreateShareNoteCommentResponse) {
+        option (api.post) = "/api/v1/share/:share_id/comment";
+    }
+}

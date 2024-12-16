@@ -4,6 +4,14 @@ global:
   local_ip: ${POD_IP}
   container_name: ${HOSTNAME}
 
+log:                      #日志配置
+  log_mode: console
+  log_level: debug
+  log_file_name: "log/hertz.log"
+  log_max_size: 10
+  log_max_age: 3
+  log_max_backups: 50
+
 hertz:
   app: "Universal"
   server: "enterbuild"
@@ -21,10 +29,3 @@ mongo:
   max_pool_size: 20
   min_pool_size: 10
   database: "universal_server"
-
-redis:
-  path: "localhost:6379"
-  password: ""
-  max_pool_size: 20
-  min_pool_size: 10
-  database: 0

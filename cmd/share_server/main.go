@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"net/http"
 	"path/filepath"
 
-	"github.com/dgdts/ShareServer/init"
+	"github.com/cloudwego/hertz/pkg/app"
+	global_init "github.com/dgdts/ShareServer/init"
 	"github.com/dgdts/UniversalServer/pkg/config"
 )
 
@@ -21,6 +24,13 @@ func main() {
 		panic(err)
 	}
 
-	server := init.InitServer(config.GetGlobalStaticConfig())
+	global_init.InitLogger(config.GetGlobalStaticConfig().Log)
 
+	server := global_init.InitServer(config.GetGlobalStaticConfig())
+
+	server.GET("/ping", func(ctx context.Context, c *app.RequestContext) {
+		c.String(http.StatusOK, "pong")
+	})
+
+	server.Spin()
 }

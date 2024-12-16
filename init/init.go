@@ -4,6 +4,7 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	hertz_config "github.com/cloudwego/hertz/pkg/common/config"
 	"github.com/cloudwego/hertz/pkg/common/hlog"
+	"github.com/dgdts/ShareServer/biz/router"
 	"github.com/dgdts/UniversalServer/pkg/config"
 )
 
@@ -22,5 +23,8 @@ func InitServer(config *config.GlobalConfig) *server.Hertz {
 	}
 
 	s := server.New(serverOptions...)
+
+	router.GeneratedRegister(s)
+
 	return s
 }

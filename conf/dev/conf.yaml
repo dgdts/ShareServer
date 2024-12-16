@@ -1,0 +1,30 @@
+global:
+  namespace: Development
+  env_name: dev
+  local_ip: ${POD_IP}
+  container_name: ${HOSTNAME}
+
+hertz:
+  app: "Universal"
+  server: "enterbuild"
+  enable_pprof: true
+  enable_gzip: true 
+  enable_access_log: true
+  service: 
+    - name: "share_server"
+      addr: ":9988"
+
+mongo:
+  path: "localhost:27017/"
+  username: ""
+  password: ""
+  max_pool_size: 20
+  min_pool_size: 10
+  database: "universal_server"
+
+redis:
+  path: "localhost:6379"
+  password: ""
+  max_pool_size: 20
+  min_pool_size: 10
+  database: 0

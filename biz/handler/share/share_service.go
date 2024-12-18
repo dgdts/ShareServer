@@ -16,14 +16,27 @@ import (
 // GetShareNote .
 // @router /api/v1/share/note [GET]
 func GetShareNote(ctx context.Context, c *app.RequestContext) {
-	response.JSON(ctx, c, biz_share.GetShareNote, func(ctx context.Context, c *app.RequestContext, req *share.GetShareNoteRequest) error {
-		shareId := c.Param("share_id")
-		if shareId == "" {
-			return errors.New("share_id is required")
-		}
-		req.ShareId = shareId
-		return nil
-	})
+	var req share.GetShareNoteRequest
+	err := c.BindAndValidate(&req)
+	if err != nil {
+		response.JSONError(c, err)
+		return
+	}
+
+	shareId := c.Param("share_id")
+	if shareId == "" {
+		response.JSONError(c, errors.New("share_id is required"))
+		return
+	}
+	req.ShareId = shareId
+
+	resp, err := biz_share.GetShareNote(ctx, &req)
+	if err != nil {
+		response.JSONError(c, err)
+		return
+	}
+
+	response.JSONSuccess(c, resp)
 }
 
 // ListShareNoteComments .

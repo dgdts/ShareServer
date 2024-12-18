@@ -19,28 +19,3 @@ func JSONSuccess(c *app.RequestContext, data interface{}) {
 	resp := NewResultWithData(data)
 	c.JSON(http.StatusOK, resp)
 }
-
-func JSON[Req any, Res any](ctx context.Context, c *app.RequestContext, handler JSONHandler[Req, Res], before ...JSONBeforeHandler[Req]) {
-	var req Req
-	err := c.BindAndValidate(&req)
-	if err != nil {
-		JSONError(c, err)
-		return
-	}
-
-	for _, beforeHandler := range before {
-		err = beforeHandler(ctx, c, &req)
-		if err != nil {
-			JSONError(c, err)
-			return
-		}
-	}
-
-	resp, err := handler(ctx, &req)
-	if err != nil {
-		JSONError(c, err)
-		return
-	}
-
-	JSONSuccess(c, resp)
-}

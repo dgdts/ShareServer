@@ -13,15 +13,7 @@ import (
 type CacheStore[T any] interface {
 	Get(ctx context.Context, key string) (T, error)
 	Set(ctx context.Context, key string, value T, ttl time.Duration) error
-	Delete(ctx context.Context, key string) error
 }
-
-type UpdateStrategy int
-
-const (
-	DeleteOnUpdate UpdateStrategy = iota
-	RefreshOnUpdate
-)
 
 type ChainCache[T any] struct {
 	stores []struct {
@@ -29,15 +21,14 @@ type ChainCache[T any] struct {
 		store  CacheStore[T]
 		getTTL TTLStrategy
 	}
-	updateStrategy UpdateStrategy
-	group          *singleflight.Group
-	updating       sync.Map
+
+	group    *singleflight.Group
+	updating sync.Map
 }
 
-func NewChainCache[T any](updateStrategy UpdateStrategy) *ChainCache[T] {
+func NewChainCache[T any]() *ChainCache[T] {
 	return &ChainCache[T]{
-		updateStrategy: updateStrategy,
-		group:          &singleflight.Group{},
+		group: &singleflight.Group{},
 	}
 }
 
@@ -66,12 +57,9 @@ func (c *ChainCache[T]) doGet(ctx context.Context, key string) (T, error) {
 	for i, s := range c.stores {
 		value, err := s.store.Get(ctx, key)
 		if err == nil {
-			backfillCtx := context.Background()
-			go func(level int, k string, v T) {
-				c.group.Do(fmt.Sprintf("backfill-%s-%d", k, level), func() (interface{}, error) {
-					return nil, c.backfill(backfillCtx, level, k, v)
-				})
-			}(i, key, value)
+			if i > 0 {
+				go c.handleCacheUpdate(ctx, key, value, i-1)
+			}
 			return value, nil
 		}
 		lastErr = err
@@ -86,49 +74,58 @@ func (c *ChainCache[T]) Set(ctx context.Context, key string, value T) error {
 		return err
 	}
 
-	return c.handleCacheUpdate(ctx, key, value)
+	return c.handleCacheUpdate(ctx, key, value, len(c.stores)-2)
 }
 
 func (c *ChainCache[T]) Update(ctx context.Context, key string) error {
-	if _, updating := c.updating.LoadOrStore(key, true); updating {
-		return errors.New("update in progress")
-	}
-
-	defer c.updating.Delete(key)
-
 	value, err := c.stores[len(c.stores)-1].store.Get(ctx, key)
 	if err != nil {
 		return err
 	}
 
-	return c.handleCacheUpdate(ctx, key, value)
+	return c.handleCacheUpdate(ctx, key, value, len(c.stores)-2)
 }
 
-func (c *ChainCache[T]) handleCacheUpdate(ctx context.Context, key string, value T) error {
-	switch c.updateStrategy {
-	case DeleteOnUpdate:
-		for i := 0; i < len(c.stores)-1; i++ {
-			if err := c.stores[i].store.Delete(ctx, key); err != nil {
-				return err
-			}
-		}
-	case RefreshOnUpdate:
-		for i := 0; i < len(c.stores)-1; i++ {
-			if err := c.stores[i].store.Set(ctx, key, value, c.stores[i].getTTL.GetTTL(key, i)); err != nil {
-				return err
-			}
-		}
+func (c *ChainCache[T]) handleCacheUpdate(ctx context.Context, key string, value T, level int) error {
+	if level < 0 {
+		return fmt.Errorf("level must be greater than 0, got %d", level)
 	}
-	return nil
+
+	if level >= len(c.stores)-1 {
+		return errors.New("this is only for backfill, please use Set or Update to update the datasource")
+	}
+
+	// use the last write wins strategy to update the cache
+	var updateChanAny any
+	var updateChan chan T
+
+	updateChanAny, _ = c.updating.LoadOrStore(key, make(chan T, 10000))
+	updateChan = updateChanAny.(chan T)
+	updateChan <- value
+
+	defer c.updating.Delete(key)
+
+	var err error
+	for {
+		v, ok := <-updateChan
+		if !ok {
+			break
+		}
+		for len(updateChan) > 0 {
+			v = <-updateChan
+		}
+
+		err = c.updateCache(ctx, key, v, level)
+	}
+
+	return err
 }
 
-func (c *ChainCache[T]) backfill(ctx context.Context, level int, key string, value T) error {
-	for i := 0; i < level; i++ {
-		ttl := c.stores[i].getTTL.GetTTL(key, i)
-		if ttl > 0 {
-			if err := c.stores[i].store.Set(ctx, key, value, ttl); err != nil {
-				return err
-			}
+func (c *ChainCache[T]) updateCache(ctx context.Context, key string, value T, level int) error {
+	for i := level; i >= 0; i-- {
+		err := c.stores[i].store.Set(ctx, key, value, c.stores[i].getTTL.GetTTL(key, i))
+		if err != nil {
+			return err
 		}
 	}
 	return nil

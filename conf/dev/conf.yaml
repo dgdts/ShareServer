@@ -29,3 +29,12 @@ mongo:
   max_pool_size: 20
   min_pool_size: 10
   database: "universal_server"
+
+redis:
+  default: 
+    host: "10.11.176.187"
+    port: 6379
+    db: 3
+    pool_size: 50
+    password: "Uprqw1mS^Dkq0a9Q"
+    idle_timeout: 30

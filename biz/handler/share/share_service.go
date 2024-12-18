@@ -30,13 +30,13 @@ func GetShareNote(ctx context.Context, c *app.RequestContext) {
 	}
 	req.ShareId = shareId
 
-	resp, err := biz_share.GetShareNote(ctx, &req)
+	html, err := biz_share.GetShareNote(ctx, &req)
 	if err != nil {
 		response.JSONError(c, err)
 		return
 	}
 
-	response.JSONSuccess(c, resp)
+	c.Data(consts.StatusOK, "text/html", html)
 }
 
 // ListShareNoteComments .

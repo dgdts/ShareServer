@@ -43,14 +43,14 @@ message CreateShareNoteCommentResponse {}
 
 service ShareService {
     rpc GetShareNote (GetShareNoteRequest) returns (GetShareNoteResponse) {
-        option (api.get) = "/api/v1/share/:share_id";
+        option (api.get) = "/share/:share_id";
     }
 
     rpc ListShareNoteComments (ListShareNoteCommentsRequest) returns (ListShareNoteCommentsResponse) {
-        option (api.get) = "/api/v1/share/:share_id/comments";
+        option (api.get) = "/share/:share_id/comments";
     }
 
     rpc CreateShareNoteComment (CreateShareNoteCommentRequest) returns (CreateShareNoteCommentResponse) {
-        option (api.post) = "/api/v1/share/:share_id/comment";
+        option (api.post) = "/share/:share_id/comment";
     }
 }

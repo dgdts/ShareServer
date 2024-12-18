@@ -2,7 +2,6 @@ package share
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"time"
 
@@ -14,10 +13,12 @@ import (
 const (
 	ShareNoteCollection    = "share_notes"
 	MarkdownNoteCollection = "markdown_notes"
+	NoteMetaCollection     = "note_meta"
 )
 
 const (
-	IDField = "_id"
+	IDField     = "_id"
+	NoteIDField = "note_id"
 )
 
 const (
@@ -46,6 +47,8 @@ type ShareNote struct {
 	NoteID    string             `bson:"note_id"`
 	UserID    string             `bson:"user_id"`
 	NoteType  string             `bson:"note_type"`
+	NoteTitle string             `bson:"note_title"`
+	UserName  string             `bson:"username"`
 	ShareType ShareNoteShareType `bson:"share_type"`
 	ShareURL  string             `bson:"share_url"`
 	ViewCount int                `bson:"view_count"`
@@ -111,7 +114,12 @@ func (s *ShareMongoStore) Get(ctx context.Context, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	return json.Marshal(markdownNote)
+	html, err := GenerateShareNoteHTML(ctx, &markdownNote, shareNote.NoteTitle, shareNote.UserName)
+	if err != nil {
+		return nil, err
+	}
+
+	return html, nil
 }
 
 func (s *ShareMongoStore) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {

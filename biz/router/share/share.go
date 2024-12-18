@@ -18,16 +18,10 @@ func Register(r *server.Hertz) {
 
 	root := r.Group("/", rootMw()...)
 	{
-		_api := root.Group("/api", _apiMw()...)
-		{
-			_v1 := _api.Group("/v1", _v1Mw()...)
-			{
-				_share := _v1.Group("/share", _shareMw()...)
-				_share.GET("/:share_id", append(_getsharenoteMw(), share.GetShareNote)...)
-				_share_id := _share.Group("/:share_id", _share_idMw()...)
-				_share_id.POST("/comment", append(_createsharenotecommentMw(), share.CreateShareNoteComment)...)
-				_share_id.GET("/comments", append(_listsharenotecommentsMw(), share.ListShareNoteComments)...)
-			}
-		}
+		_share := root.Group("/share", _shareMw()...)
+		_share.GET("/:share_id", append(_getsharenoteMw(), share.GetShareNote)...)
+		_share_id := _share.Group("/:share_id", _share_idMw()...)
+		_share_id.POST("/comment", append(_createsharenotecommentMw(), share.CreateShareNoteComment)...)
+		_share_id.GET("/comments", append(_listsharenotecommentsMw(), share.ListShareNoteComments)...)
 	}
 }

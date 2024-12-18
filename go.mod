@@ -7,6 +7,7 @@ toolchain go1.22.10
 require (
 	github.com/cloudwego/hertz v0.9.4
 	github.com/dgdts/UniversalServer v0.0.0-20241216035222-e025ca701da2
+	github.com/gomarkdown/markdown v0.0.0-20241205020045-f7e15b2f3e62
 	github.com/hertz-contrib/logger/zap v1.1.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/sync v0.10.0
@@ -16,6 +17,7 @@ require (
 
 require (
 	github.com/chenmingyong0423/go-mongox v1.6.0 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
